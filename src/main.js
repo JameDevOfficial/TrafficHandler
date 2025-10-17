@@ -2,33 +2,56 @@ import * as readline from "readline";
 import * as colors from "./modules/colors.js";
 import * as utils from "./modules/utils.js";
 
-function main() {
+async function main() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
   let userName;
-  rl.question(`How would you like to be called? `, (name) => {
-    userName = name;
-    rl.close();
-    menuScreen(userName);
-  });
+  let running = true;
 
-  readline.emitKeypressEvents(process.stdin);
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode(true);
-  }
-
-  process.stdin.on("keypress", (str, key) => {
-    if (key.name == "1") {
-      console.log("You selected option 1: Start Game");
-    } else if (key.name === "escape") {
+  await new Promise((resolve) => {
+    rl.question(`How would you like to be called? `, (name) => {
+      userName = name;
       rl.close();
-    }
+      resolve();
+    });
   });
-
   process.stdin.resume();
+ 
+  while (running) {
+    utils.clearScreen();
+    menuScreen(userName);
+
+    console.log("\nWaiting for input...");
+
+      const key = await utils.getChar();
+      
+
+    if (!key) {
+      running = false;
+      break;
+    }
+
+    if (key.name === "1") {
+      console.log("\nYou selected option 1: Start Game (Press any key to return)");
+      await utils.getChar();
+    } else if (key.name === "2") {
+      console.log("\nYou selected option 2: See Stats (Press any key to return)");
+      await utils.getChar();
+    } else if (key.name === "3") {
+      console.log("\nYou selected option 3: Settings (Press any key to return)");
+      await utils.getChar();
+    } else if (key.name === "escape" || (key.ctrl && key.name === "c")) {
+      console.log("\nExiting program...");
+      running = false;
+    } else {
+      console.log(`\nInvalid option '${key.name || key.sequence}' (Press any key to return)`);
+      await utils.getChar();
+    }
+  }
+  process.exit();
 }
 main();
 
