@@ -1,22 +1,23 @@
 import * as colors from "./colors.js";
 import * as readline from "readline";
 
-
 export function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 export function printDecoLine(format = null) {
-    if (format != null && colors) {
-        colors.print_c("--------------------------------------", format, true, true);
-    } else {
-        console.log("--------------------------------------");
-    }
+  if (format != null && colors) {
+    colors.print_c("--------------------------------------", format, true, true);
+  } else {
+    console.log("--------------------------------------");
+  }
 }
 
 export function clearScreen() {
-    console.log("\x1b[2J");
+  //console.log("\x1b[2J");
+  //console.clear();
+  process.stdout.write("\x1bc\x1b[3J");
 }
 
 export function getChar() {
