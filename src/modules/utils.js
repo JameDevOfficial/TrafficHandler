@@ -12,3 +12,7 @@ export function printDecoLine(format = null) {
         console.log("--------------------------------------");
     }
 }
+
+export function clearScreen() {
+    console.log("\x1b[2J");
+}
