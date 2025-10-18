@@ -82,17 +82,16 @@ function menuScreen(name, highScore = 0) {
 async function handleTrafficGame() {
   utils.clearScreen();
   colors.print_c("Welcome to the traffic game!", colors.ansiColors.BoldCyan);
-  console.log("You will have to control the binary data flow.");
+  colors.print_c("You will have to toggle the binary data flow by pressing any key.", colors.ansiColors.Bold);
   console.log("   - While the traffic light is green, send the data.");
   console.log(
     "   - If it turns yellow/red, immediatly stop. \nYour internet service provider doesn't like it when you let data flow during red light. \nIf you violate to often, you may loose your access to the internet and the game ends.\n"
   );
-  console.log("Press any key to toggle the data flow.");
+  process.stdout.write("Press any key to start ");
+  utils.dotAnimation.start();
   await utils.getChar();
-  console.log("Great!");
+  await utils.dotAnimation.stop();
   await printTrafficLight(2);
-  console.log("\n\nPress any key to start the game...");
-  await utils.getChar();
   await playBinaryDataAnimation();
   return;
 } 
