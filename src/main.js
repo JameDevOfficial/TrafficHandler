@@ -2,6 +2,9 @@ import * as readline from "readline";
 import * as colors from "./modules/colors.js";
 import * as utils from "./modules/utils.js";
 
+const BSTRING_LENGTH=200;
+const RED_LIGHT=5; //chance in % 
+
 async function main() {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -75,7 +78,7 @@ function menuScreen(name, highScore = 0) {
   console.log("3. Settings");
   utils.printDecoLine();
 }
-
+ 
 async function handleTrafficGame() {
   utils.clearScreen();
   colors.print_c("Welcome to the traffic game!", colors.ansiColors.BoldCyan);
@@ -84,13 +87,114 @@ async function handleTrafficGame() {
   console.log(
     "   - If it turns yellow/red, immediatly stop. \nYour internet service provider doesn't like it when you let data flow during red light. \nIf you violate to often, you may loose your access to the internet and the game ends.\n"
   );
-  console.log("Press any key to start the data flow.");
+  console.log("Press any key to toggle the data flow.");
   await utils.getChar();
   console.log("Great!");
   await printTrafficLight(2);
-  console.log("\n\nPress any key to continue...");
+  console.log("\n\nPress any key to start the game...");
   await utils.getChar();
+  await playBinaryDataAnimation();
   return;
+} 
+
+async function drawGameHeader(isFlowing, trafficLightColor) {
+  utils.clearScreen();
+  colors.print_c("Traffic Light Data Flow Control", colors.ansiColors.BoldCyan);
+  console.log("Press any key to toggle the data flow on/off");
+  console.log("Press ESC or Ctrl+C to exit back to menu\n");
+
+  if (isFlowing) {
+    colors.print_c("Status: FLOWING", colors.ansiColors.BoldGreen);
+  } else {
+    colors.print_c("Status: STOPPED", colors.ansiColors.BoldRed);
+  }
+  console.log("");
+  printTrafficLight(trafficLightColor);
+}
+
+async function playBinaryDataAnimation() {
+  let isFlowing = true;
+  let running = true;
+  let trafficLightColor = 2;
+  
+
+  let binaryStream = generateBinaryString(BSTRING_LENGTH);
+  let streamPosition = BSTRING_LENGTH;
+  const displayWidth = 80;
+
+  drawGameHeader(isFlowing, trafficLightColor);
+  console.log("\n");
+
+  colors.print_c("Data Stream:", colors.ansiColors.BoldWhite);
+  process.stdout.write("\n");
+
+  readline.emitKeypressEvents(process.stdin);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
+
+  const keyListener = (str, key) => {
+    if (key && (key.name === "escape" || (key.ctrl && key.name === "c"))) {
+      running = false;
+    } else if (key) {
+      isFlowing = !isFlowing;
+      process.stdout.write("\x1b[s");
+      process.stdout.write("\x1b[5;1H");
+      process.stdout.write("\x1b[2K");
+      if (isFlowing) {
+        process.stdout.write("\x1b[1;32mStatus: FLOWING\x1b[0m");
+      } else {
+        process.stdout.write("\x1b[1;31mStatus: STOPPED\x1b[0m");
+      }
+      process.stdout.write("\x1b[u");
+    }
+  };
+
+  process.stdin.on("keypress", keyListener);
+
+  while (running) {
+    process.stdout.write("\x1b[1A");
+    process.stdout.write("\x1b[2K");
+    process.stdout.write("\r");
+
+    let displayLine = "";
+    for (let i = 0; i < displayWidth; i++) {
+      const index = (streamPosition + i) % binaryStream.length;
+      displayLine += binaryStream[index];
+    }
+
+    if (isFlowing) {
+      colors.print_c(displayLine, colors.ansiColors.BoldCyan);
+    } else {
+      colors.print_c(displayLine, colors.ansiColors.Red);
+    }
+
+    if (isFlowing) {
+      streamPosition--;
+      if (streamPosition <= 0 ) {
+        streamPosition = BSTRING_LENGTH;
+        binaryStream = generateBinaryString(BSTRING_LENGTH);
+      }
+    }
+
+    await utils.sleep(50);
+  }
+
+  process.stdin.removeListener("keypress", keyListener);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(false);
+  }
+
+  console.log("\nReturning to menu...");
+  await utils.sleep(1000);
+}
+
+function generateBinaryString(length) {
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += Math.random() > 0.5 ? "1" : "0";
+  }
+  return result;
 }
 
 function printTrafficLight(color) {
