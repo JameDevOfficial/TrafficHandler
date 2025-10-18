@@ -51,28 +51,36 @@ export function getChar() {
     });
 }
 
-let count = 0;
-let running = false;
+let dotAnimationInterval = null;
+let dotCount = 0;
 export let dotAnimation = {
     async start() {
-        running = true;
-        while (running == true) {
-            if (count >= 3) {
-                readline.moveCursor(process.stdout, -3, 0);
-                readline.clearLine(process.stdout, 1);
-                count= 0;
+        await this.stop();
+
+        dotCount = 0;
+        dotAnimationInterval = setInterval(() => {
+            if (dotCount >= 3) {
+                process.stdout.write("\b\b\b   \b\b\b");
+                dotCount = 0;
             }
             process.stdout.write(".");
-            count++;
-            await sleep(500);
-        }
+            dotCount++;
+        }, 1000);
     },
 
-    stop() {
-        running = false;
-        count = 0;
-        readline.moveCursor(process.stdout, -3, 0);
-        readline.clearLine(process.stdout, 1);
-        console.log("...");
+    async stop() {
+        if (dotAnimationInterval) {
+            clearInterval(dotAnimationInterval);
+            dotAnimationInterval = null;
+        }
+        if (dotCount > 0) {
+            process.stdout.write(
+                "\b".repeat(dotCount) +
+                    " ".repeat(dotCount) +
+                    "\b".repeat(dotCount)
+            );
+        }
+        dotCount = 0;
+        console.log("");
     },
 };

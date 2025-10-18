@@ -27,10 +27,11 @@ async function main() {
     utils.clearScreen();
     menuScreen(userName);
 
-    console.log("\nWaiting for input...");
+    process.stdout.write("\nWaiting for input");
+    utils.dotAnimation.start();
 
     const key = await utils.getChar();
-
+    await utils.dotAnimation.stop();
     if (!key) {
       running = false;
       break;
@@ -184,7 +185,7 @@ async function playBinaryDataAnimation() {
     process.stdin.setRawMode(false);
   }
 
-  console.log("\nReturning to menu...");
+  process.stdout.write("\nReturning to menu ...");
   await utils.sleep(1000);
 }
 
