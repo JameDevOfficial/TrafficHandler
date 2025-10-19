@@ -147,51 +147,65 @@ export let traffic = {
 
         process.stdin.on("keypress", keyListener);
 
-        while (running) {
-            process.stdout.write("\x1b[5A");
-            process.stdout.write("\r");
-            process.stdout.write("\x1b[2K");
-            this.printStatus();
-            let displayLine = "";
-            for (let i = 0; i < displayWidth; i++) {
-                const index = (streamPosition + i) % binaryStream.length;
-                displayLine += binaryStream[index];
-            }
-
-            if (this.isFlowing) {
-                colors.print_c(displayLine, colors.ansiColors.BoldCyan);
-            } else {
-                colors.print_c(displayLine, colors.ansiColors.Red);
-            }
-
-            if (this.isFlowing) {
-                streamPosition--;
-                if (streamPosition <= 0) {
-                    streamPosition = BSTRING_LENGTH;
-                    binaryStream = this.generateBinaryString(BSTRING_LENGTH);
+        try {
+            while (running) {
+                process.stdout.write("\x1b[5A");
+                process.stdout.write("\r");
+                process.stdout.write("\x1b[2K");
+                this.printStatus();
+                let displayLine = "";
+                for (let i = 0; i < displayWidth; i++) {
+                    const index = (streamPosition + i) % binaryStream.length;
+                    displayLine += binaryStream[index];
                 }
+
+                if (this.isFlowing) {
+                    colors.print_c(displayLine, colors.ansiColors.BoldCyan);
+                } else {
+                    colors.print_c(displayLine, colors.ansiColors.Red);
+                }
+
+                if (this.isFlowing) {
+                    streamPosition--;
+                    if (streamPosition <= 0) {
+                        streamPosition = BSTRING_LENGTH;
+                        binaryStream =
+                            this.generateBinaryString(BSTRING_LENGTH);
+                    }
+                }
+
+                let res = this.calculatePoints(this.isFlowing, 1);
+                if (res == -1) {
+                    this.trafficLight.running = false;
+                    running = false;
+                    await utils.sleep(100);
+                    utils.dotAnimation.start();
+                    await utils.getChar();
+                    utils.dotAnimation.stop();
+                    break;
+                }
+                await utils.sleep(50);
             }
 
-            let res = this.calculatePoints(this.isFlowing, 1);
-            if (res == -1){
-                this.trafficLight.running = false;
-                running = false;
-                await utils.sleep(100);
-                utils.dotAnimation.start();
-                await utils.getChar();
-                utils.dotAnimation.stop();
-                return;
+            if (running === false) {
+                process.stdout.write("\nReturning to menu ...");
+                await utils.sleep(1000);
             }
-            await utils.sleep(50);
+        } finally {
+            if (player.points > player.highScore) {
+                player.highScore = player.points;
+            }
+            player.points = 0;
+            player.nPoints = 0;
+            try {
+                process.stdin.removeListener("keypress", keyListener);
+            } catch {}
+            if (process.stdin.isTTY) {
+                try {
+                    process.stdin.setRawMode(false);
+                } catch {}
+            }
         }
-
-        process.stdin.removeListener("keypress", keyListener);
-        if (process.stdin.isTTY) {
-            process.stdin.setRawMode(false);
-        }
-
-        process.stdout.write("\nReturning to menu ...");
-        await utils.sleep(1000);
     },
 
     calculatePoints(isFlowing, multiplier = 1) {

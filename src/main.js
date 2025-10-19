@@ -64,7 +64,7 @@ async function main() {
 }
 main();
 
-function menuScreen(name, highScore = 0) {
+function menuScreen(name) {
     utils.clearScreen();
     colors.print_c(
         `.-----------------------------------.
@@ -79,11 +79,9 @@ function menuScreen(name, highScore = 0) {
         colors.ansiColors.Blue
     );
     colors.print_c("Hello " + name + "!", colors.ansiColors.Green);
-    console.log("Your High Score: " + highScore);
+    console.log("Your High Score: " + player.highScore);
     utils.printDecoLine();
     console.log("1. Start Game");
-    console.log("2. See Stats");
-    console.log("3. Settings");
     utils.printDecoLine();
 }
 
@@ -93,20 +91,21 @@ async function handleTrafficGame() {
     utils.dotAnimation.start();
     await utils.getChar();
     await utils.dotAnimation.stop();
-    // 
+    traffic.isFlowing = true;
     await utils.clearScreen();
     traffic.drawGameHeader();
     await traffic.printTrafficLight(traffic.trafficLight.color);
     traffic.printStatus();
     console.log("");
-    //
-    traffic.trafficLight.start();
-    await traffic.playBinaryDataAnimation();
-    traffic.trafficLight.stop();
+
+    try {
+        traffic.trafficLight.start();
+        await traffic.playBinaryDataAnimation();
+    } finally {
+        traffic.trafficLight.stop();
+    }
     return;
 }
-
-
 
 /*console.log(`                       ##
                       _[]_
