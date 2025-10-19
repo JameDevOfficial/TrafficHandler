@@ -4,7 +4,7 @@ import * as utils from "./modules/utils.js";
 import { player } from "./player.js";
 
 const BSTRING_LENGTH = 200;
-const RED_LIGHT = 5; //chance in %
+const MAX_NPOINTS = 50;
 
 export let traffic = {
     async printTrafficGameHead() {
@@ -54,23 +54,16 @@ export let traffic = {
                     let changeTime = Math.random() * (max - min) + min;
                     let nextChange =
                         changeTime - (this.color === 0 ? redDif : 0);
-                    console.log("Wait time: ", nextChange);
                     await this.sleep(nextChange);
                     if (this.color == 0) {
                         this.color = 2;
                     } else if (this.color == 2) {
                         this.color = 1;
-                        utils.clearScreen();
-                        traffic.drawGameHeader();
-                        await traffic.printTrafficLight(this.color);
-                        traffic.printStatus();
+                        traffic.drawFullGameScreen();
                         await this.sleep(Math.random() * 500 + 500);
                         this.color = 0;
                     }
-                    utils.clearScreen();
-                    traffic.drawGameHeader();
-                    await traffic.printTrafficLight(this.color);
-                    traffic.printStatus();
+                    traffic.drawFullGameScreen();
                 }
             } catch (e) {
                 if (e.message !== "Traffic light stopped")
@@ -93,6 +86,14 @@ export let traffic = {
         },
     },
 
+    async drawFullGameScreen() {
+        utils.clearScreen();
+        traffic.drawGameHeader();
+        await traffic.printTrafficLight(this.trafficLight.color);
+        traffic.printStatus();
+        console.log("");
+    },
+
     async drawGameHeader() {
         utils.clearScreen();
         colors.print_c(
@@ -107,6 +108,11 @@ export let traffic = {
     isFlowing: true,
 
     printStatus() {
+        colors.print_c("Data sent: " + player.points, colors.ansiColors.Cyan);
+        colors.print_c(
+            "Data illegaly sent: " + player.nPoints,
+            colors.ansiColors.Red
+        );
         if (this.isFlowing) {
             colors.print_c("Status: FLOWING", colors.ansiColors.BoldGreen);
         } else {
@@ -135,21 +141,17 @@ export let traffic = {
                 running = false;
             } else if (key) {
                 this.isFlowing = !this.isFlowing;
-                utils.clearScreen();
-                this.drawGameHeader();
-                this.printTrafficLight(this.trafficLight.color);
-                this.printStatus();
-                console.log("");
+                traffic.drawFullGameScreen();
             }
         };
 
         process.stdin.on("keypress", keyListener);
 
         while (running) {
-            process.stdout.write("\x1b[1A");
+            process.stdout.write("\x1b[5A");
             process.stdout.write("\r");
             process.stdout.write("\x1b[2K");
-
+            this.printStatus();
             let displayLine = "";
             for (let i = 0; i < displayWidth; i++) {
                 const index = (streamPosition + i) % binaryStream.length;
@@ -170,6 +172,7 @@ export let traffic = {
                 }
             }
 
+            this.calculatePoints(this.isFlowing, 1);
             await utils.sleep(50);
         }
 
@@ -180,6 +183,16 @@ export let traffic = {
 
         process.stdout.write("\nReturning to menu ...");
         await utils.sleep(1000);
+    },
+
+    calculatePoints(isFlowing, multiplier = 1) {
+        if (isFlowing) {
+            if (this.trafficLight.color == 1 || this.trafficLight.color == 2) {
+                player.points += 1 * multiplier;
+            } else if (this.trafficLight.color == 0) {
+                player.nPoints += 1 * multiplier;
+            }
+        }
     },
 
     generateBinaryString(length) {

@@ -93,10 +93,13 @@ async function handleTrafficGame() {
     utils.dotAnimation.start();
     await utils.getChar();
     await utils.dotAnimation.stop();
+    // 
     await utils.clearScreen();
     traffic.drawGameHeader();
     await traffic.printTrafficLight(traffic.trafficLight.color);
     traffic.printStatus();
+    console.log("");
+    //
     traffic.trafficLight.start();
     await traffic.playBinaryDataAnimation();
     traffic.trafficLight.stop();
