@@ -1,5 +1,5 @@
 <div align="center">
-<img src="assets/logo.png" width="100%" alt="Logo"/> 
+<img src="assets/logo_traffic.png" width="100%" alt="Logo"/> 
 
 Traffic Handler is a CLI based game where you need to let as much data as possible flow. (Text based)
 
