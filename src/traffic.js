@@ -110,7 +110,7 @@ export let traffic = {
     printStatus() {
         colors.print_c("Data sent: " + player.points, colors.ansiColors.Cyan);
         colors.print_c(
-            "Data illegaly sent: " + player.nPoints,
+            "Data illegaly sent: " + player.nPoints + " / " + MAX_NPOINTS,
             colors.ansiColors.Red
         );
         if (this.isFlowing) {
@@ -172,7 +172,16 @@ export let traffic = {
                 }
             }
 
-            this.calculatePoints(this.isFlowing, 1);
+            let res = this.calculatePoints(this.isFlowing, 1);
+            if (res == -1){
+                this.trafficLight.running = false;
+                running = false;
+                await utils.sleep(100);
+                utils.dotAnimation.start();
+                await utils.getChar();
+                utils.dotAnimation.stop();
+                return;
+            }
             await utils.sleep(50);
         }
 
@@ -191,8 +200,12 @@ export let traffic = {
                 player.points += 1 * multiplier;
             } else if (this.trafficLight.color == 0) {
                 player.nPoints += 1 * multiplier;
+                if (player.nPoints >= MAX_NPOINTS) {
+                    return -1;
+                }
             }
         }
+        return 0;
     },
 
     generateBinaryString(length) {
