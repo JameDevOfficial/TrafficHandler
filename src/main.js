@@ -87,8 +87,7 @@ function menuScreen(name, highScore = 0) {
     console.log("3. Settings");
     utils.printDecoLine();
 }
-
-async function handleTrafficGame() {
+async function printTrafficGameHead() {
     utils.clearScreen();
     colors.print_c("Welcome to the traffic game!", colors.ansiColors.BoldCyan);
     colors.print_c(
@@ -99,16 +98,87 @@ async function handleTrafficGame() {
     console.log(
         "   - If it turns yellow/red, immediatly stop. \nYour internet service provider doesn't like it when you let data flow during red light. \nIf you violate to often, you may loose your access to the internet and the game ends.\n"
     );
+}
+async function handleTrafficGame() {
+    await printTrafficGameHead();
     process.stdout.write("Press any key to start ");
     utils.dotAnimation.start();
     await utils.getChar();
     await utils.dotAnimation.stop();
-    await printTrafficLight(2);
+    await utils.clearScreen();
+    await printTrafficLight(trafficLight.color);
+    trafficLight.start();
     await playBinaryDataAnimation();
+    trafficLight.stop();
     return;
 }
 
-async function drawGameHeader(isFlowing, trafficLightColor) {
+let trafficLight = {
+    color: 2,
+    running: false,
+    sleepTimeout: null,
+    rejectSleep: null,
+
+    async sleep(ms) {
+        return new Promise((resolve, reject) => {
+            this.sleepTimeout = setTimeout(resolve, ms);
+            this.rejectSleep = () => {
+                clearTimeout(this.sleepTimeout);
+                this.sleepTimeout = null;
+                reject(new Error("Traffic light stopped"));
+            };
+        });
+    },
+
+    async start() {
+        if (this.running) return;
+
+        this.running = true;
+        this.color = 2;
+        const min = 2000;
+        const max = 5000;
+        const redDif = 2000;
+
+        try {
+            while (this.running) {
+                let changeTime = Math.random() * (max - min) + min;
+                let nextChange = changeTime + (this.color === 0 ? redDif : 0);
+                console.log("Wait time: ", nextChange);
+                await this.sleep(nextChange);
+                if (this.color == 0) {
+                    this.color = 2;
+                } else if (this.color == 2) {
+                    this.color = 1;
+                    utils.clearScreen();
+                    await printTrafficLight(trafficLight.color);
+                    await this.sleep(Math.random() * 1000);
+                    this.color = 0;
+                }
+                utils.clearScreen();
+                await printTrafficLight(trafficLight.color);
+            }
+        } catch (e) {
+            if (e.message !== "Traffic light stopped")
+                console.error("Error while changing traffic lights: " + e);
+        } finally {
+            this.running = false;
+            this.color = 2;
+            this.sleepTimeout = null;
+            this.rejectSleep = null;
+            console.log("Traffic light stopped and state reset.");
+        }
+    },
+
+    stop() {
+        if (!this.running) return;
+        this.running = false;
+        if (this.rejectSleep) {
+            this.rejectSleep();
+        }
+    },
+};
+
+async function drawGameHeader(isFlowing) {
     utils.clearScreen();
     colors.print_c(
         "Traffic Light Data Flow Control",
@@ -116,9 +186,6 @@ async function drawGameHeader(isFlowing, trafficLightColor) {
     );
     console.log("Press any key to toggle the data flow on/off");
     console.log("Press ESC or Ctrl+C to exit back to menu\n");
-
-    printTrafficLight(trafficLightColor);
-    console.log("");
 
     if (isFlowing) {
         colors.print_c("Status: FLOWING", colors.ansiColors.BoldGreen);
@@ -130,14 +197,13 @@ async function drawGameHeader(isFlowing, trafficLightColor) {
 async function playBinaryDataAnimation() {
     let isFlowing = true;
     let running = true;
-    let trafficLightColor = 2;
 
     let binaryStream = generateBinaryString(BSTRING_LENGTH);
     let streamPosition = BSTRING_LENGTH;
     const displayWidth = 80;
 
-    drawGameHeader(isFlowing, trafficLightColor);
-
+    drawGameHeader(isFlowing,);
+    printTrafficLight(trafficLight.color);
     colors.print_c("Data Stream:", colors.ansiColors.BoldWhite);
     process.stdout.write("\n");
 
