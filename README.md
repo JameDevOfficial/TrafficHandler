@@ -20,6 +20,11 @@ Clone the repository and run it with nodejs via
 node ./main.js
 ```
 
+# Development
+This cli programm was made using 
+- nodejs
+- custom modules I made (colors, utils)
+
 # Bugs
 There are no known bugs a the moment, but if you do find some, feel free to open an issue.
 
