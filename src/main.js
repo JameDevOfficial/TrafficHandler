@@ -1,9 +1,8 @@
 import * as readline from "readline";
 import * as colors from "./modules/colors.js";
 import * as utils from "./modules/utils.js";
+import { player } from "./player.js";
 import { traffic } from "./traffic.js";
-
-
 
 async function main() {
     const rl = readline.createInterface({

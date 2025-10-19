@@ -1,6 +1,7 @@
 import * as readline from "readline";
 import * as colors from "./modules/colors.js";
 import * as utils from "./modules/utils.js";
+import { player } from "./player.js";
 
 const BSTRING_LENGTH = 200;
 const RED_LIGHT = 5; //chance in %
