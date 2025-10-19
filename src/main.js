@@ -106,7 +106,9 @@ async function handleTrafficGame() {
     await utils.getChar();
     await utils.dotAnimation.stop();
     await utils.clearScreen();
+    drawGameHeader();
     await printTrafficLight(trafficLight.color);
+    printStatus();
     trafficLight.start();
     await playBinaryDataAnimation();
     trafficLight.stop();
@@ -137,12 +139,12 @@ let trafficLight = {
         this.color = 2;
         const min = 2000;
         const max = 5000;
-        const redDif = 2000;
+        const redDif = 1000;
 
         try {
             while (this.running) {
                 let changeTime = Math.random() * (max - min) + min;
-                let nextChange = changeTime + (this.color === 0 ? redDif : 0);
+                let nextChange = changeTime - (this.color === 0 ? redDif : 0);
                 console.log("Wait time: ", nextChange);
                 await this.sleep(nextChange);
                 if (this.color == 0) {
@@ -150,12 +152,16 @@ let trafficLight = {
                 } else if (this.color == 2) {
                     this.color = 1;
                     utils.clearScreen();
+                    drawGameHeader();
                     await printTrafficLight(trafficLight.color);
-                    await this.sleep(Math.random() * 1000);
+                    printStatus();
+                    await this.sleep(Math.random() * 500 + 500);
                     this.color = 0;
                 }
                 utils.clearScreen();
+                drawGameHeader();
                 await printTrafficLight(trafficLight.color);
+                printStatus();
             }
         } catch (e) {
             if (e.message !== "Traffic light stopped")
@@ -178,34 +184,34 @@ let trafficLight = {
     },
 };
 
-async function drawGameHeader(isFlowing) {
+async function drawGameHeader() {
     utils.clearScreen();
     colors.print_c(
         "Traffic Light Data Flow Control",
         colors.ansiColors.BoldCyan
     );
     console.log("Press any key to toggle the data flow on/off");
-    console.log("Press ESC or Ctrl+C to exit back to menu\n");
+    console.log("Press ESC or Ctrl+C to exit back to menu");
+    console.log();
+}
 
+let isFlowing = true;
+
+function printStatus() {
     if (isFlowing) {
         colors.print_c("Status: FLOWING", colors.ansiColors.BoldGreen);
     } else {
         colors.print_c("Status: STOPPED", colors.ansiColors.BoldRed);
     }
+    console.log();
 }
 
 async function playBinaryDataAnimation() {
-    let isFlowing = true;
     let running = true;
 
     let binaryStream = generateBinaryString(BSTRING_LENGTH);
     let streamPosition = BSTRING_LENGTH;
     const displayWidth = 80;
-
-    drawGameHeader(isFlowing,);
-    printTrafficLight(trafficLight.color);
-    colors.print_c("Data Stream:", colors.ansiColors.BoldWhite);
-    process.stdout.write("\n");
 
     readline.emitKeypressEvents(process.stdin);
     if (process.stdin.isTTY) {
@@ -217,15 +223,11 @@ async function playBinaryDataAnimation() {
             running = false;
         } else if (key) {
             isFlowing = !isFlowing;
-            process.stdout.write("\x1b[s");
-            process.stdout.write("\x1b[3A");
-            process.stdout.write("\r\x1b[2K");
-            if (isFlowing) {
-                process.stdout.write("\x1b[1;32mStatus: FLOWING\x1b[0m");
-            } else {
-                process.stdout.write("\x1b[1;31mStatus: STOPPED\x1b[0m");
-            }
-            process.stdout.write("\x1b[u");
+            utils.clearScreen();
+            drawGameHeader();
+            printTrafficLight(trafficLight.color);
+            printStatus();
+            console.log("");
         }
     };
 
@@ -233,8 +235,8 @@ async function playBinaryDataAnimation() {
 
     while (running) {
         process.stdout.write("\x1b[1A");
-        process.stdout.write("\x1b[2K");
         process.stdout.write("\r");
+        process.stdout.write("\x1b[2K");
 
         let displayLine = "";
         for (let i = 0; i < displayWidth; i++) {
@@ -312,7 +314,8 @@ function printTrafficLight(color) {
     colors.print_c("&&&&", green, true, false);
     process.stdout.write(`/   |   \\
              '===|    '""'    |==='
-                 '--.______.--'`);
+                 '--.______.--'
+`);
     return;
 }
 
